@@ -11,10 +11,23 @@ class Main extends CI_Controller {
 	public function index()
 	{
 		$data['url_login'] = site_url().'/main/check_login';
+<<<<<<< HEAD
 		
 		$this->load->view('login',$data);
 	}
 		
+=======
+		$data['url_reset'] = site_url().'/main/reset_pass';
+		$this->load->view('login',$data);
+	}
+
+	public function reset_pass()
+	{
+		$data['url_reset'] = site_url().'/main/reset_pass';
+		$this->load->view('reset',$data);
+	}
+	
+>>>>>>> 2e94832fb23b11a5aa6e3026f948da3ad760974c
 	function check_login(){
 		$email = $this->input->post('email');
 		$password = $this->input->post('password');
