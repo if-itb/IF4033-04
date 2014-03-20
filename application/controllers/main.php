@@ -4,6 +4,8 @@ class Main extends CI_Controller {
 	function  __construct() {
 		parent::__construct();
 		$this->load->helper('url');
+		$this->load->library('encrypt');
+		$this->load->model('Main_model');
 	}
 	
 	public function index()
@@ -13,7 +15,14 @@ class Main extends CI_Controller {
 	}
 	
 	function check_login(){
-		echo "test";
+		$email = $this->input->post('email');
+		$password = $this->input->post('password');
+		if($this->Main_model->check_login($email,$password)){
+			echo "SUCESS";
+		}
+		else{
+			redirect(site_url());
+		}	
 	}
 	
 }
