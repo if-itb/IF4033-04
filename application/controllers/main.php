@@ -11,7 +11,14 @@ class Main extends CI_Controller {
 	public function index()
 	{
 		$data['url_login'] = site_url().'/main/check_login';
+		$data['url_reset'] = site_url().'/main/reset_pass';
 		$this->load->view('login',$data);
+	}
+
+	public function reset_pass()
+	{
+		$data['url_reset'] = site_url().'/main/reset_pass';
+		$this->load->view('reset',$data);
 	}
 	
 	function check_login(){
