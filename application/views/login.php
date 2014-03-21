@@ -18,7 +18,8 @@
         <input type="email" name="email" class="form-control" placeholder="Email address" maxlength="100" required autofocus>
         <input type="password" name="password" class="form-control" placeholder="Password" maxlength="100" required>
         <button class="btn btn-lg btn-primary btn-block" type="submit">Sign in</button>
-        <p><a href="<?php echo $url_reset?>">Lupa password?</p>
+        <p><?php echo $this->session->flashdata('message');?></p>
+				<p><a href="<?php echo $url_reset?>">Lupa password?</p>
       </form>
     </div> <!-- /container -->
   </body>
