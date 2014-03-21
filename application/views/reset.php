@@ -24,21 +24,3 @@
     </div> <!-- /container -->
   </body>
 </html>
-
-<!--
-<body>
-<div id="header"></div>
-<div id="page">
-		<h2>Password Recovery</h2>
-    
-  <form action="/reset/password/forgotPass.php" method="post">
-        <div class="fieldGroup"><label for="uname">Username</label><div class="field"><input type="text" name="uname" id="uname" value="" maxlength="20"></div></div>
-        <div class="fieldGroup"><label>- OR -</label></div>
-        <div class="fieldGroup"><label for="email">Email</label><div class="field"><input type="text" name="email" id="email" value="" maxlength="255"></div></div>
-        <input type="hidden" name="subStep" value="1" />
-        <div class="fieldGroup"><input type="submit" value="Submit" style="margin-left: 150px;" /></div>
-        <div class="clear"></div>
-    </form>
-    </div>
-</body>
--->
