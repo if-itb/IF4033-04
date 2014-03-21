@@ -12,20 +12,18 @@ class Main extends CI_Controller {
 	
 	public function index()
 	{
+		//periksa apakah sudah login
 		if($this->session->userdata('email')){
-			redirect(site_url('main/home'));
+			//halaman upload
+			$data['url_upload'] = site_url().'/main/upload';
+			$this->load->view('upload',$data);
 		}else
 		{
+			//halaman login
 			$data['url_login'] = site_url().'/main/check_login';
 			$data['url_reset'] = site_url().'/main/reset_pass';
 			$this->load->view('login',$data);
 		}
-	}
-	
-	public function home(){
-		if($this->session->userdata('email')){
-			echo "welcome";	
-		} else redirect(site_url());
 	}
 	
 	function check_login(){
@@ -48,20 +46,12 @@ class Main extends CI_Controller {
 		redirect(site_url());
 	}
 
-	public function reset_pass()
-	{
+	public function reset_pass(){
 		$data['url_reset'] = site_url().'/main/reset_pass';
 		$this->load->view('reset',$data);
 	}
 	
-	public function upload()
-	{
-		$data['url_upload'] = site_url().'/main/proses_upload';			
-		$this->load->view('upload',$data);
-	}
-	
-	public function proses_upload()
-	{
+	public function upload(){
 		$file = $this->input->post('file');
 		$file = $_FILES['file']['name'];
 		if ($_FILES['file']["error"] > 0)
