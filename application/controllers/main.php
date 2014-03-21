@@ -47,8 +47,40 @@ class Main extends CI_Controller {
 	}
 
 	public function reset_pass(){
-		$data['url_reset'] = site_url().'/main/reset_pass';
+		$data['url_reset'] = site_url('main/send_forgot_mail');
 		$this->load->view('reset',$data);
+	}
+	
+	public function reset_password($token){
+		if($this->Main_model->check_token($token)){
+			echo 
+			"<p>reset password</p>
+			<form method='post' action='".site_url('main/update_password')."'>
+				<input type='hidden' name='token' value='".$token."'/>
+				<input type='password' name='password'>
+				<button type='submit'>submit</button>
+			</form>";
+		}
+		else{
+			echo "invalid token";
+		}
+	}
+	
+	public function update_password(){
+		$password = $this->input->post('password');
+		$token = $this->input->post('token');
+		$this->Main_model->update_password($token,$password);
+		redirect(site_url());
+	}
+	
+	public function send_forgot_mail(){
+		$email = $this->input->post('email');
+		if($token = $this->Main_model->generate_forgot_token($email)){
+			$message = "<a href='".site_url('main/reset_password/'.$token)."'>reset password</a>";
+			$this->send_mail($email,$message);
+		}
+		$this->session->set_flashdata('reset_message','check your email');
+		redirect(site_url('main/reset_pass'));
 	}
 	
 	public function upload(){
@@ -69,6 +101,34 @@ class Main extends CI_Controller {
 			}
 		}
 		redirect(site_url());
+	}
+	
+	public function send_mail($email,$message){
+		$config = Array(
+			'protocol' => 'smtp',
+			'smtp_host' => 'ssl://smtp.googlemail.com',
+			'smtp_port' => 465,
+			'smtp_user' => 'tugaskpi1@gmail.com', // change it to yours
+			'smtp_pass' => '100%aman', // change it to yours
+			'mailtype' => 'html',
+			'charset' => 'iso-8859-1',
+			'wordwrap' => TRUE
+		);
+
+		$this->load->library('email', $config);
+		$this->email->set_newline("\r\n");
+		$this->email->from('dedy.berastagi@gmail.com'); // change it to yours
+		$this->email->to($email);// change it to yours
+		$this->email->subject('Reset Password');
+		$this->email->message($message);
+		if($this->email->send())
+		{
+			echo 'Email sent';
+		}
+		else
+		{
+			show_error($this->email->print_debugger());
+		}
 	}
 	
 }

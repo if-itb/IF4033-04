@@ -13,13 +13,14 @@
 
   <body>
     <div class="container">
-      <form method="post" action="" class="form-signin" role="form">
+      <form method="post" action="<?php echo $url_reset;?>" class="form-signin" role="form">
         <h2 class="form-signin-heading">Reset Password</h2>
         <p>Silahkan masukkan alamat email anda.</p>
         <br />
         <input type="email" name="email" class="form-control" placeholder="Email address" maxlength="100" required autofocus>
        <br/>
        <button class="btn btn-lg btn-primary btn-block" type="submit">Submit</button>
+			 <?php echo $this->session->flashdata('reset_message');?>
       </form>
     </div> <!-- /container -->
   </body>

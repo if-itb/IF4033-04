@@ -82,5 +82,60 @@ class Main_model extends CI_Model{
 			$query = $this->db->get('login')->row();
 			return 'upload/'.$query->id.$query->salt;
 		}
+		
+		function generate_forgot_token($email){
+			$this->db->select('id,salt');
+			$this->db->where('email',$email);
+			$query = $this->db->get('login')->row();
+			if($query){
+				$this->db->where('email',$email);
+				$this->db->delete('forgot_password');
+				$token = $query->id.$this->encrypt->sha1(time().$query->salt);
+				$data = array(
+					 'email' => $email,
+					 'token' => $token
+				);
+				$this->db->insert('forgot_password',$data);
+				return $token;
+			}
+			return NULL;
+		}
+		
+		function check_token($token){
+			$this->db->select('id,time_stamp');
+			$this->db->where('token',$token);
+			if($query = $this->db->get('forgot_password')->row()){
+				$waiting_time = $this->db->query("SELECT UNIX_TIMESTAMP(DATE_ADD('".$query->time_stamp."',INTERVAL 1 DAY)) - UNIX_TIMESTAMP(NOW()) as waiting_time")->row()->waiting_time;
+				if($waiting_time > 0){
+					return 1;
+				}
+				else{
+					$this->db->where('id',$query->id);
+					$this->db->delete('forgot_password');
+					return 0;
+				}
+			}
+			else{				
+				return 0;
+			}
+		}
+		
+		function update_password($token,$password){
+			$this->db->select('email');
+			$this->db->where('token',$token);
+			$email = $this->db->get('forgot_password')->row()->email;
+			//delete token
+			$this->db->where('email',$email);
+			$this->db->delete('forgot_password');
+			//update password
+			$this->db->select('id,salt');
+			$this->db->where('email',$email);
+			$query = $this->db->get('login')->row();	
+			$new_password = $this->encrypt->sha1($password.$query->salt);
+			$this->db->where('email',$email);
+			$this->db->set('password',$new_password);
+			$this->db->update('login');
+		}
+		
 }		
 ?>
