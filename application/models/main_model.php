@@ -13,6 +13,7 @@ class Main_model extends CI_Model{
 				if($query->password == $this->encrypt->sha1($password.$query->salt))
 				{
 					$this->sucess_attempt($email);
+					$this->session->set_userdata('email',$email);		
 					return 1;
 				}else
 				{	
@@ -73,6 +74,13 @@ class Main_model extends CI_Model{
 			$last_attempt = $this->db->get('login_attempt')->row()->last_attempt;
 			$waiting_time = $this->db->query("SELECT UNIX_TIMESTAMP(DATE_ADD('$last_attempt',INTERVAL 500 SECOND)) - UNIX_TIMESTAMP(NOW()) as waiting_time")->row()->waiting_time;
 			return $waiting_time;
+		}
+		
+		function get_folder($email){
+			$this->db->select('id,salt');
+			$this->db->where('email',$email);
+			$query = $this->db->get('login')->row();
+			return 'upload/'.$query->id.$query->salt;
 		}
 }		
 ?>
