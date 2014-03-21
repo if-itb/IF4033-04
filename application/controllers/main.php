@@ -47,42 +47,46 @@ class Main extends CI_Controller {
 	}
 
 	public function reset_pass(){
-		$data['url_reset'] = site_url('main/send_forgot_mail');
-		$this->load->view('reset',$data);
-	}
-	
-	public function reset_password($token){
-		if($this->Main_model->check_token($token)){
-			echo 
-			"<p>reset password</p>
-			<form method='post' action='".site_url('main/update_password')."'>
-				<input type='hidden' name='token' value='".$token."'/>
-				<input type='password' name='password'>
-				<button type='submit'>submit</button>
-			</form>";
+		$data['url_reset_request'] = site_url().'/main/check_reset';
+		$data['url_new_pass'] = site_url().'/main/new_pass';
+		$data['url_home'] = site_url();
+		if (isset($_GET['a']) && $_GET['a'] == 'recover' && $_GET['email'] != "") {
+			$show = 'invalidKey';
+			$result = $this->Main_model->checkEmailKey($_GET['email'],urldecode(base64_decode($_GET['u'])));
+			if ($result == false)
+			{
+				$error = true;
+				$this->load->view('invalidkey',$data);
+			} elseif ($result['status'] == true) {
+				$reset = array('key' => $_GET['email'],
+		              'userID' => urldecode(base64_decode($_GET['u']))
+		              );
+				$this->session->set_userdata($reset);
+				$error = false;			
+				$this->load->view('new_pass',$data);
+			}
+			
 		}
-		else{
-			echo "invalid token";
-		}
+		else{$this->load->view('reset',$data);}
+		
 	}
-	
-	public function update_password(){
-		$password = $this->input->post('password');
-		$token = $this->input->post('token');
-		$this->Main_model->update_password($token,$password);
-		redirect(site_url());
-	}
-	
-	public function send_forgot_mail(){
+
+	function check_reset(){
 		$email = $this->input->post('email');
-		if($token = $this->Main_model->generate_forgot_token($email)){
-			$message = "<a href='".site_url('main/reset_password/'.$token)."'>reset password</a>";
-			$this->send_mail($email,$message);
+		$data['url_home'] = site_url();
+		if($this->Main_model->checkEmail($email)){
+			$this->Main_model->sendPasswordEmail($email);
 		}
-		$this->session->set_flashdata('reset_message','check your email');
-		redirect(site_url('main/reset_pass'));
+		$this->load->view('emailsent',$data);
 	}
 	
+	function new_pass(){
+		$data['url_home'] = site_url();
+		$userID = $this->session->userdata('userID');
+		$key = $this->session->userdata('key');
+		$this->Main_model->updateUserPassword($userID,$_POST['password'],$key);
+		$this->load->view('resetsuccess',$data);
+	}
 	public function upload(){
 		if($this->session->userdata('email')){
 			$folder = $this->Main_model->get_folder($this->session->userdata('email'));
@@ -101,34 +105,6 @@ class Main extends CI_Controller {
 			}
 		}
 		redirect(site_url());
-	}
-	
-	public function send_mail($email,$message){
-		$config = Array(
-			'protocol' => 'smtp',
-			'smtp_host' => 'ssl://smtp.googlemail.com',
-			'smtp_port' => 465,
-			'smtp_user' => 'tugaskpi1@gmail.com', // change it to yours
-			'smtp_pass' => '100%aman', // change it to yours
-			'mailtype' => 'html',
-			'charset' => 'iso-8859-1',
-			'wordwrap' => TRUE
-		);
-
-		$this->load->library('email', $config);
-		$this->email->set_newline("\r\n");
-		$this->email->from('dedy.berastagi@gmail.com'); // change it to yours
-		$this->email->to($email);// change it to yours
-		$this->email->subject('Reset Password');
-		$this->email->message($message);
-		if($this->email->send())
-		{
-			echo 'Email sent';
-		}
-		else
-		{
-			show_error($this->email->print_debugger());
-		}
 	}
 	
 }

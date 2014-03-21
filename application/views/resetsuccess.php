@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Login</title>
+    <title>Sukses</title>
     <!-- Bootstrap core CSS -->
     <link href="<?php echo base_url('asset');?>/css/bootstrap.min.css" rel="stylesheet">
     <!-- Custom styles for this template -->
@@ -13,14 +13,7 @@
 
   <body>
     <div class="container">
-      <form method="post" action="<?php echo $url_reset_request?>" class="form-signin" role="form">
-        <h2 class="form-signin-heading">Reset Password</h2>
-        <p>Silahkan masukkan alamat email anda.</p>
-        <br />
-        <input type="email" name="email" class="form-control" placeholder="Email address" maxlength="100" required autofocus>
-       <br/>
-       <button class="btn btn-lg btn-primary btn-block" type="submit">Submit</button>
-      </form>
+      <p>Password berhasil di reset. SIlahkan kembali <a href="<?php echo $url_home?>">login</a></p>
     </div> <!-- /container -->
   </body>
 </html>

@@ -1,4 +1,5 @@
 <?php
+define('PW_SALT','(+3%_');
 class Main_model extends CI_Model{
     function  __construct() {
         parent::__construct();
@@ -82,60 +83,130 @@ class Main_model extends CI_Model{
 			$query = $this->db->get('login')->row();
 			return 'upload/'.$query->id.$query->salt;
 		}
-		
-		function generate_forgot_token($email){
-			$this->db->select('id,salt');
+
+		function checkEmail($email)
+		{
+			$error = array('status'=>false,'userID'=>0);
+			if (isset($email) && trim($email) != '') {
+				//email telah dimasukkan
+				$this->db->select('id');
+				$this->db->where('email',trim($email));
+				$query = $this->db->get('login');
+				$numRows = $query->num_rows();
+				$userID = $query->row();
+				if ($numRows >= 1) return array('status'=>true,'userID'=>$userID);
+				
+			} else {
+				//masukan kosong;
+				return $error;
+			}
+		}
+
+		function sendPasswordEmail($email)
+		{
+			$this->db->select('id,name,password');
 			$this->db->where('email',$email);
-			$query = $this->db->get('login')->row();
-			if($query){
-				$this->db->where('email',$email);
-				$this->db->delete('forgot_password');
-				$token = $query->id.$this->encrypt->sha1(time().$query->salt);
-				$data = array(
-					 'email' => $email,
-					 'token' => $token
-				);
-				$this->db->insert('forgot_password',$data);
-				return $token;
-			}
-			return NULL;
-		}
-		
-		function check_token($token){
-			$this->db->select('id,time_stamp');
-			$this->db->where('token',$token);
-			if($query = $this->db->get('forgot_password')->row()){
-				$waiting_time = $this->db->query("SELECT UNIX_TIMESTAMP(DATE_ADD('".$query->time_stamp."',INTERVAL 1 DAY)) - UNIX_TIMESTAMP(NOW()) as waiting_time")->row()->waiting_time;
-				if($waiting_time > 0){
-					return 1;
+			$query = $this->db->get('login');
+			$userID= $query->row()->id;
+			$pword= $query->row()->password;
+			$uname= $query->row()->name;
+			$expFormat = mktime(date("H")+1, date("i"), date("s"), date("m")  , date("d"), date("Y"));
+			$expDate = date("Y-m-d H:i:s",$expFormat);
+			$key = md5($email . rand(0,10000) .$expDate . PW_SALT);
+			$data = array(
+			   'userId' => $userID ,
+			   'key' => $key ,
+			   'expDate' => $expDate
+			);
+			if ($query = $this->db->insert('recovery',$data))
+			{
+				$passwordLink = "<a href=\"http://localhost/kpi/index.php/main/reset_pass?a=recover&email=" . $key . "&u=" . urlencode(base64_encode($userID)) . "\">http://localhost/kpi/index.php/main/reset_pass?a=recover&email=" . $key . "&u=" . urlencode(base64_encode($userID)) . "</a>";
+				$message = "Halo $uname,\r\n";
+				$message .= "Silahkan klik link berikut untuk reset password Anda:\r\n";
+				$message .= "-----------------------\r\n";
+				$message .= "$passwordLink\r\n";
+				$message .= "-----------------------\r\n";
+				$message .= "Yakinkan untuk mengcopy keseluruhan link ke browser Anda. Link akan kadaluarsa dalam waktu 1 jam untuk kepentingan keamanan\r\n\r\n";
+				$message .= "Jika Anda tidak merasa mencoba mengubah password, abaikan email ini.\r\n\r\n";
+				$message .= "Terimakasih,\r\n";
+				$message .= "-- IDJ Team";
+				$headers = "From: Our Site <webmaster@localhost.com> \n";
+				$headers .= "To-Sender: \n";
+				$headers .= "X-Mailer: PHP\n"; // mailer
+				$headers .= "Reply-To: webmaster@localhost.com\n"; // Reply address
+				$headers .= "Return-Path: webmaster@localhost.com\n"; //Return Path for errors
+				$headers .= "Content-Type: text/html; charset=iso-8859-1"; //Enc-type
+				$subject = "Reset Password";
+					require("phpmailer/class.phpmailer.php");
+				$mail = new PHPMailer();
+				$mail->IsSMTP();                                      // set mailer to use SMTP
+				$mail->Host = "smtp.gmail.com";  // specify main and backup server
+				$mail->SMTPSecure = "tls";
+				$mail->Port       = 587;
+				$mail->SMTPAuth = true;     // turn on SMTP authentication
+				$mail->Username = "iqbalmuhammad.18@gmail.com";  // SMTP username
+				$mail->Password = "!8Atryuasdf"; // SMTP password
+				$mail->From = "iqbalmuhammad.18@gmail.com";
+				$mail->FromName = "Muhammad Iqbal";
+				$mail->AddAddress($email);
+				$mail->AddReplyTo("iqbalmuhammad.18@gmail.com", "Information");
+				$mail->WordWrap = 50;                                 // set word wrap to 50 characters
+				$mail->IsHTML(true);                                  // set email format to HTML
+				$mail->Subject = $subject;
+				$mail->Body    = $message;
+				$mail->AltBody = "This is the body in plain text for non-HTML mail clients";
+				if(!$mail->Send())
+				{
+				   echo "Message could not be sent. <p>";
+				   echo "Mailer Error: " . $mail->ErrorInfo;
+				   exit;
 				}
-				else{
-					$this->db->where('id',$query->id);
-					$this->db->delete('forgot_password');
-					return 0;
-				}
-			}
-			else{				
-				return 0;
+				return str_replace("\r\n","<br/ >",$message);
+			
 			}
 		}
-		
-		function update_password($token,$password){
+
+		function checkEmailKey($key,$userID)
+		{
+			$curDate = date("Y-m-d H:i:s");
+			$this->db->select('userId');
+			$this->db->where('key',$key);
+			$this->db->where('userId',$userID);
+			$this->db->where('expDate >=', $curDate);
+			$query = $this->db->get('recovery');
+			$numRows = $query->num_rows();
+			$userID = $query->row();
+			if ($numRows > 0 && $userID != '')
+			{
+				return array('status'=>true,'userID'=>$userID);
+			}
+			return false;
+		}
+
+		function updateUserPassword($userID,$password,$key)
+		{
+			if ($this->Main_model->checkEmailKey($key,$userID) === false) return false;
+			$password = md5(trim($password) . PW_SALT);
+			$data = array(
+               'password' => $password
+            );
+			$this->db->where('id',$userID);
+			if ($query = $this->db->update('login',$data))
+			{	
+				$this->db->where('key',$key);
+				$this->db->delete('recovery');
+			}
+		}
+
+		function getEmail($userID)
+		{
 			$this->db->select('email');
-			$this->db->where('token',$token);
-			$email = $this->db->get('forgot_password')->row()->email;
-			//delete token
-			$this->db->where('email',$email);
-			$this->db->delete('forgot_password');
-			//update password
-			$this->db->select('id,salt');
-			$this->db->where('email',$email);
-			$query = $this->db->get('login')->row();	
-			$new_password = $this->encrypt->sha1($password.$query->salt);
-			$this->db->where('email',$email);
-			$this->db->set('password',$new_password);
-			$this->db->update('login');
+			$this->db->where('id',$userID);
+			if ($query = $this->db->get('login')->row())
+			{
+				$uname = $query->row();
+				return $uname;
+			}
 		}
-		
-}		
+	}		
 ?>
