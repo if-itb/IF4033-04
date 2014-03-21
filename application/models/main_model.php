@@ -186,9 +186,12 @@ class Main_model extends CI_Model{
 		function updateUserPassword($userID,$password,$key)
 		{
 			if ($this->Main_model->checkEmailKey($key,$userID) === false) return false;
-			$password = md5(trim($password) . PW_SALT);
+			$this->db->select('salt');
+			$this->db->where('id',$userID);
+			$query = $this->db->get('login');	
+			$newpassword = $this->encrypt->sha1($password.$query->row()->salt);
 			$data = array(
-               'password' => $password
+               'password' => $newpassword
             );
 			$this->db->where('id',$userID);
 			if ($query = $this->db->update('login',$data))
@@ -196,6 +199,7 @@ class Main_model extends CI_Model{
 				$this->db->where('key',$key);
 				$this->db->delete('recovery');
 			}
+			$this->session->sess_destroy();
 		}
 
 		function getEmail($userID)
