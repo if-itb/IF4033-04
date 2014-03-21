@@ -44,6 +44,11 @@ class Main_model extends CI_Model{
 				}
 				//jika attempt lebih kecil dari 5 return true
 				return 1;	
+			}else{
+				$data = array(
+					 'email' => $email 
+				);
+				$this->db->insert('login_attempt', $data); 
 			}
 			return 1; //jika tidak terdapat percobaan login return true
 		}
